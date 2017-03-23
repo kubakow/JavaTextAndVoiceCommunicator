@@ -27,7 +27,6 @@ public class StartClientFrame extends JFrame{
 	private JTextField usernameTextField;
 	private JButton connectButton;
 	private JButton closeButton;
-	//TODO socket must be initialized and set in constructor to new Window for messages
 	private Socket socket;
 	
 	public StartClientFrame(){
@@ -62,7 +61,7 @@ public class StartClientFrame extends JFrame{
 				
 				try {
 					socket = new Socket(getIp(),getPort());
-					//TODO new JFrame in which there will be main chat window
+					new Thread(new MessageFrame(socket,getUserName())).start();
 				} catch (UnknownHostException e1) {
 					e1.printStackTrace();
 				} catch (IOException e1) {
