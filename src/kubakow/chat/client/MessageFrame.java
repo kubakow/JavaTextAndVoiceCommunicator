@@ -12,8 +12,6 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.Socket;
 
 import javax.swing.BorderFactory;
@@ -107,7 +105,7 @@ public class MessageFrame extends JFrame implements ActionListener, Runnable {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
-				//TODO another window with voice chat controls
+				new ClientVoiceControls(clientSocket.getInetAddress(), clientSocket.getPort());
 				
 			}
 		});

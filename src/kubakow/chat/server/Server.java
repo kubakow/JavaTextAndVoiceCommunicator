@@ -17,17 +17,19 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 
+
 public class Server{
 	private ServerSocket serverSocket = null;
 	private Socket clientSocket = null;
-	private byte[] bufferReceived;
-	private InputStream inputStream;
-	private OutputStream outputStream;
+	private DatagramSocket serverReceivingSocket = null;
+	private DatagramSocket serverSendingSocket = null;
 	boolean flag;
 	private List<SingleClientThread> clientsList; 
+	private List<InetAddress> voiceAddressList;
 	
 	public Server() {
 		clientsList = new ArrayList<SingleClientThread>();
+		voiceAddressList = new ArrayList<InetAddress>();
 	}
 
 	public void acceptNewClient(){
@@ -38,11 +40,15 @@ public class Server{
 			SingleClientThread newlyConnectedClient = new SingleClientThread(clientSocket);
 			clientsList.add(newlyConnectedClient);
 
+			VoiceClientThread newVoiceClient = new VoiceClientThread(clientSocket.getInetAddress());
+			voiceAddressList.add(clientSocket.getInetAddress());
+			
 			for(int i=0;i<clientsList.size();i++){
 				System.out.println(clientsList.get(i).getId());
 			}
 			System.out.println(clientsList.size());
 			newlyConnectedClient.start();
+			newVoiceClient.start();
 			
 			System.out.println(clientSocket);
 		} catch (IOException e) {
@@ -72,6 +78,8 @@ public class Server{
 	public void startServer(int port) {
 		try {
 			serverSocket = new ServerSocket(port);
+			serverReceivingSocket = new DatagramSocket(port+1);
+			serverSendingSocket = new DatagramSocket();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -106,7 +114,6 @@ public class Server{
 				if (size > 0) {
 					clientName = new String(bufrec, 0, size);
 				}else{
-					in.close();
 					clientName = "User ";}
 
 			} catch (IOException e) {
@@ -161,7 +168,54 @@ public class Server{
 		}
 	}
 
-	
+public class VoiceClientThread extends Thread{
+		
+		private InetAddress clientAddress;
+		private byte[] buf = new byte[8820];	
+		private boolean serverWorkingFlag;
+		
+		
+		DatagramPacket receivedPacket;
+		DatagramPacket sentPacket;
+		
+		public VoiceClientThread(InetAddress clientAddress){
+			this.clientAddress = clientAddress;
+			
+		}	
+		
+		
+			
+			@Override
+			public void run() {
+				
+				try{
+					
+					serverWorkingFlag = true;
+
+					while(serverWorkingFlag){
+						receivedPacket = new DatagramPacket(buf,  buf.length);
+						serverReceivingSocket.receive(receivedPacket);
+						System.out.println("received from: " + receivedPacket.getAddress());
+						for(InetAddress address : voiceAddressList){
+							if(address==receivedPacket.getAddress()){
+							}else{
+						sentPacket =  new DatagramPacket(receivedPacket.getData(), receivedPacket.getLength(), address, serverReceivingSocket.getPort());
+						System.out.println("sent to: "+address+" "+receivedPacket.getAddress());
+						serverSendingSocket.send(sentPacket);
+							}
+						}
+					}
+					
+					
+					}catch(SocketException se){se.printStackTrace();
+					}catch(IOException ioe){ioe.printStackTrace();}
+				
+				
+				
+				
+				
+			}
+	}
 	
 	
 }
